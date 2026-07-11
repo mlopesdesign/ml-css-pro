@@ -1,0 +1,72 @@
+/* ML CSS Pro — Visual Editor Overlay v1.4.5 */
+html.mlcssp-visual-mode{margin-right:0!important}
+.mlcssp-ve-outline{position:absolute;pointer-events:none;border:2px dashed #7ab8ff;background:rgba(122,184,255,.08);z-index:999990;transition:all .06s ease;display:none;border-radius:2px;box-shadow:0 0 0 99999px rgba(255,255,255,.02)}
+.mlcssp-ve-outline span{position:absolute;left:0;top:-26px;background:#2f7dff;color:#fff;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:6px 9px;border-radius:4px;white-space:nowrap;box-shadow:0 4px 10px rgba(15,23,42,.18)}
+.mlcssp-ve-toolbar{position:fixed;left:0;top:0;width:42px;height:100vh;background:#f2f3f4;border-right:1px solid #d7d9dc;z-index:999998;display:flex;flex-direction:column;align-items:center;padding-top:10px;box-shadow:2px 0 10px rgba(15,23,42,.08)}
+.mlcssp-ve-toolbar button{width:38px;height:40px;border:0;background:transparent;color:#5d6670;font:600 18px/1 sans-serif;cursor:pointer;border-bottom:1px solid rgba(0,0,0,.05)}
+.mlcssp-ve-toolbar button:hover,.mlcssp-ve-toolbar button.is-active{color:#155e6f;background:#fff}
+.mlcssp-ve-panel{position:fixed;right:18px;top:12px;width:360px;max-width:calc(100vw - 56px);height:calc(100vh - 28px);background:#ececec;border-radius:7px;box-shadow:0 12px 38px rgba(15,23,42,.28);z-index:999999;overflow:hidden;display:flex;flex-direction:column;font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color:#444;transform:translateX(0);border:1px solid rgba(0,0,0,.18)}
+.mlcssp-ve-panel *{box-sizing:border-box}.mlcssp-ve-panel.is-empty{opacity:.98}
+.mlcssp-ve-top{height:44px;background:#5a5a5a;color:#e8e8e8;display:flex;align-items:center;gap:8px;padding:0 0 0 8px;flex:0 0 auto}
+.mlcssp-ve-top button{width:38px;height:40px;background:transparent;color:#ddd;border:0;font-size:21px;cursor:pointer;border-radius:4px}.mlcssp-ve-top button:hover{background:rgba(255,255,255,.12);color:#fff}
+.mlcssp-ve-top .mlcssp-ve-close{font-size:30px;line-height:1;margin-right:auto}.mlcssp-ve-save-state{align-self:stretch;display:flex;align-items:center;padding:0 18px;margin-left:4px;background:#82a665;color:#fff;font-weight:700;letter-spacing:.2px}.mlcssp-ve-save-state.is-dirty{background:#b7892b}
+.mlcssp-ve-page{height:38px;background:#f7f7f7;border-bottom:1px solid #d4d4d4;color:#555;padding:9px 15px;font-size:13px;flex:0 0 auto}.mlcssp-ve-selected{background:#e1e1e1;border-bottom:1px solid #d2d2d2;padding:10px 14px;color:#333}.mlcssp-ve-selected b{display:block;font-size:14px;color:#2f7dff}.mlcssp-ve-selected small{display:block;color:#666;margin-top:3px}
+.mlcssp-ve-scope{display:grid;grid-template-columns:86px 1fr;gap:8px;align-items:center;background:#fafafa;border-bottom:1px solid #d8d8d8;padding:9px 14px}.mlcssp-ve-scope label{font-weight:600;font-size:12px;color:#555}.mlcssp-ve-scope select{height:32px;border:1px solid #c8c8c8;border-radius:4px;background:#fff;padding:0 8px;color:#333}
+.mlcssp-ve-tech{background:#f6f6f6;border-bottom:1px solid #d7d7d7;padding:8px 14px}.mlcssp-ve-tech summary{cursor:pointer;color:#666;font-weight:600;font-size:12px}.mlcssp-ve-selector{display:block;margin:8px 0;padding:8px;background:#fff;border:1px solid #ddd;border-radius:4px;color:#155e6f;white-space:normal;word-break:break-all}.mlcssp-ve-copy{border:1px solid #cfd4d9;background:#fff;border-radius:4px;padding:5px 8px;cursor:pointer;color:#555}
+.mlcssp-ve-sections{overflow:auto;flex:1 1 auto;background:#ececec}.mlcssp-ve-section{border-bottom:1px solid #d4d4d4;background:#ececec}.mlcssp-ve-section-title{width:100%;height:42px;border:0;background:#ececec;display:grid;grid-template-columns:28px 1fr 20px;align-items:center;text-align:left;gap:8px;padding:0 14px;cursor:pointer;color:#444;font-size:14px}.mlcssp-ve-section-title:hover{background:#f7f7f7}.mlcssp-ve-section-title span{color:#2f7dff;font-weight:700}.mlcssp-ve-section-title b{color:#999;transition:transform .12s}.mlcssp-ve-section.is-open .mlcssp-ve-section-title b{transform:rotate(180deg)}.mlcssp-ve-section-body{display:none;background:#f7f7f7;padding:12px 14px;border-top:1px solid #d9d9d9}.mlcssp-ve-section.is-open .mlcssp-ve-section-body{display:block}
+.mlcssp-ve-control{display:grid;grid-template-columns:112px 1fr;gap:10px;align-items:center;margin:0 0 11px}.mlcssp-ve-control label{font-size:12px;font-weight:600;color:#666}.mlcssp-ve-control.is-dirty label{color:#b7892b}.mlcssp-ve-control input[type=text],.mlcssp-ve-control input[type=number],.mlcssp-ve-control select{width:100%;height:32px;border:1px solid #c9ced3;border-radius:4px;background:#fff;color:#333;padding:0 8px;font-size:13px}.mlcssp-ve-control input[type=color]{width:52px;height:30px;border:1px solid #bbb;border-radius:4px;background:#fff;padding:2px;cursor:pointer}.mlcssp-ve-colorline{display:grid;grid-template-columns:58px 1fr 28px;gap:6px;align-items:center}.mlcssp-ve-clear-color{height:30px;border:1px solid #c9ced3;background:#fff;color:#777;border-radius:4px;cursor:pointer}.mlcssp-ve-rangeline{display:grid;grid-template-columns:1fr 58px 25px;gap:8px;align-items:center}.mlcssp-ve-rangeline input[type=range]{width:100%;accent-color:#2f7dff}.mlcssp-ve-rangeline span{font-size:12px;color:#777}.mlcssp-ve-segment{display:flex;gap:0}.mlcssp-ve-segment button{height:31px;min-width:36px;border:1px solid #c9ced3;background:#fff;color:#555;cursor:pointer;font-size:12px}.mlcssp-ve-segment button:first-of-type{border-radius:4px 0 0 4px}.mlcssp-ve-segment button:last-of-type{border-radius:0 4px 4px 0}.mlcssp-ve-segment button.is-active{background:#e7f0ff;color:#2f7dff;border-color:#8fb9ff}
+.mlcssp-ve-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;background:#f7f7f7;padding:12px 14px;border-top:1px solid #d5d5d5;flex:0 0 auto}.mlcssp-ve-actions button{height:38px;border:0;border-radius:5px;font-weight:700;cursor:pointer}.mlcssp-ve-preview{background:#e5edf4;color:#155e6f}.mlcssp-ve-save{background:#155e6f;color:#fff}.mlcssp-ve-preview:hover{background:#d8e8f3}.mlcssp-ve-save:hover{background:#0f4755}.mlcssp-ve-status{min-height:34px;padding:9px 14px;background:#fff;border-top:1px solid #e0e0e0;font-size:12px}.mlcssp-ve-s-ok{color:#159947}.mlcssp-ve-s-err{color:#b42318}.mlcssp-ve-s-warn{color:#b45309}.mlcssp-ve-s-info{color:#155e6f}.mlcssp-ve-footer{text-align:center;font-size:11px;color:#777;padding:8px;background:#e8e8e8;border-top:1px solid #d0d0d0;flex:0 0 auto}
+.mlcssp-ve-breadcrumb{position:fixed;left:42px;right:390px;bottom:0;height:27px;background:#efefef;border-top:1px solid #cfd4d9;z-index:999997;display:flex;align-items:center;overflow:hidden;font:12px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#777}.mlcssp-ve-breadcrumb span{height:27px;display:flex;align-items:center;padding:0 12px;border-right:1px solid #cbd0d5;background:#f7f7f7;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 50%,calc(100% - 8px) 100%,0 100%,8px 50%)}.mlcssp-ve-breadcrumb span.is-current{background:#fff;color:#2f7dff;font-weight:700}
+.mlcssp-ve-admin-bar{position:fixed;top:32px;left:50%;transform:translateX(-50%);z-index:999998;background:#5a5a5a;color:#fff;border-left:5px solid #b6ff00;border-radius:3px;padding:8px 12px;font:600 13px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;box-shadow:0 8px 22px rgba(0,0,0,.22)}.mlcssp-ve-admin-bar a{color:#b6ff00;margin-left:10px;text-decoration:none}
+/* Preset preview boxes in admin */
+.mlcssp-preset-preview{border:1px solid #dfe6ec;border-radius:14px;padding:18px;margin-top:10px;background:#fafcfd}.mlcssp-preset-preview-title{font-size:20px;font-weight:700;margin-bottom:6px}.mlcssp-preset-preview-text{font-size:14px;margin-bottom:10px;color:#555}.mlcssp-preset-preview-btn{display:inline-block;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;color:#fff;border:none}.mlcssp-preset-preview-swatches{display:flex;gap:6px;margin-top:10px}.mlcssp-preset-preview-swatch{width:28px;height:28px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #dfe6ec}
+@media(max-width:900px){html.mlcssp-visual-mode{margin-right:0!important}.mlcssp-ve-panel{right:8px;width:340px}.mlcssp-ve-breadcrumb{right:0}.mlcssp-ve-toolbar{display:none}}
+/* v1.5.4: persistent selected indicator on frontend element only */
+.mlcssp-ve-element-selected{outline:3px solid #155e6f !important;outline-offset:3px !important;box-shadow:0 0 0 5px rgba(21,94,111,.18) !important}
+/* v1.4.9: secondary actions + group highlight */
+.mlcssp-ve-actions-secondary{display:flex;gap:6px;padding:0 14px 10px}
+.mlcssp-ve-actions-secondary button{flex:1;padding:7px 4px;border:1px solid #dfe6ec;background:#fff;border-radius:8px;font-size:11px;cursor:pointer;color:#6b7a8d}
+.mlcssp-ve-actions-secondary button:hover{border-color:#155e6f;color:#155e6f}
+.mlcssp-ve-group-match{outline:1px dashed rgba(21,94,111,.5) !important;outline-offset:1px !important}
+/* v1.5.0: device switcher */
+.mlcssp-ve-devices{display:flex;gap:4px;padding:8px 14px;border-bottom:1px solid #e5eaf0}
+.mlcssp-ve-device{flex:1;padding:7px 4px;border:1px solid #dfe6ec;background:#fff;border-radius:8px;font-size:11px;cursor:pointer;color:#6b7a8d}
+.mlcssp-ve-device.is-active{background:#155e6f;color:#fff;border-color:#155e6f}
+.mlcssp-ve-device-label{padding:6px 14px;font-size:12px;color:#6b7a8d;background:#fafcfd}
+.mlcssp-ve-device-label strong{color:#155e6f}
+/* v1.5.1: page context + scope */
+.mlcssp-ve-page-label{padding:6px 14px;font-size:12px;color:#6b7a8d;background:#fafcfd;border-bottom:1px solid #f0f3f6}
+.mlcssp-ve-page-label strong{color:#155e6f}
+.mlcssp-ve-scope-hint{padding:4px 14px 8px;font-size:11px;color:#6b7a8d;line-height:1.4}
+
+/* v1.5.4 emergency layout fix: sidebar overlays without moving page; preview remains clickable. */
+.mlcssp-ve-panel{right:12px!important}
+.mlcssp-ve-breadcrumb{right:0!important}
+html.mlcssp-visual-mode[data-mlcssp-device="tablet"],html.mlcssp-visual-mode[data-mlcssp-device="mobile"]{max-width:none!important;margin:0!important;box-shadow:none!important}
+/* v1.5.4: restored responsive viewport simulation without resizing <html>. The body becomes the device frame; editor chrome remains fixed. */
+html.mlcssp-visual-mode[data-mlcssp-device="tablet"] body,
+html.mlcssp-visual-mode[data-mlcssp-device="mobile"] body{
+  overflow-x:hidden!important;
+  background-clip:padding-box!important;
+}
+html.mlcssp-visual-mode[data-mlcssp-device="tablet"]::before,
+html.mlcssp-visual-mode[data-mlcssp-device="mobile"]::before{
+  content:attr(data-mlcssp-device) ' • ' attr(data-mlcssp-device-width) 'px';
+  position:fixed;
+  left:58px;
+  top:10px;
+  z-index:999997;
+  background:#155e6f;
+  color:#fff;
+  font:700 12px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  padding:7px 10px;
+  border-radius:999px;
+  box-shadow:0 6px 16px rgba(15,23,42,.18);
+  pointer-events:none;
+}
+
+/* v1.5.4: click selection hardening */
+.mlcssp-ve-element-selected{position:relative!important;z-index:1!important}
+.mlcssp-ve-outline{pointer-events:none!important}
+.mlcssp-ve-toolbar,.mlcssp-ve-panel,.mlcssp-ve-breadcrumb,.mlcssp-ve-admin-bar{pointer-events:auto!important}
+html.mlcssp-visual-mode *{scroll-margin-top:80px}

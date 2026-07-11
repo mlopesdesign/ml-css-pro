@@ -1,0 +1,17 @@
+# Build artifacts
+*.zip
+.DS_Store
+__MACOSX/
+.vscode/
+.idea/
+node_modules/
+*.log
+*.bak
+*.tmp
+*.swp
+
+# IDE configs (excluir do repo publico)
+.agents/
+.codex/
+.mcp.json
+AGENTS.md
