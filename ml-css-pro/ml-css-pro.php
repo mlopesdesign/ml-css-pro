@@ -3,20 +3,21 @@
  * Plugin Name: ML CSS Pro
  * Plugin URI: https://mlopesdesign.com.br
  * Description: Controlador visual de CSS para WordPress e Nicepage, com scanner de CSS do frontend, deteccao real de seletores, editor de codigo com realce de sintaxe, validacao de CSS, biblioteca de snippets, historico com restauracao e assistente de seletores.
- * Version: 1.5.4
+ * Version: 1.5.5
  * Requires at least: 6.0
  * Requires PHP: 8.1
  * Author: Marcio Lopes
  * Author URI: https://mlopesdesign.com.br
  * License: GPL2+
  * Text Domain: ml-css-pro
+ * Update URI: https://github.com/mlopesdesign/ml-css-pro-releases
  */
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-define('MLCSSP_VERSION', '1.5.4');
+define('MLCSSP_VERSION', '1.5.5');
 define('MLCSSP_FILE', __FILE__);
 define('MLCSSP_BASENAME', plugin_basename(__FILE__));
 define('MLCSSP_DIR', plugin_dir_path(__FILE__));

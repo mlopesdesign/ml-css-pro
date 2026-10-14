@@ -18,7 +18,7 @@ final class MLCSSP_Plugin {
         $updater = new MLCSSP_Updater(
             MLCSSP_BASENAME,
             'ml-css-pro',
-            'mlopesdesign/ml-css-pro',
+            'mlopesdesign/ml-css-pro-releases',
             MLCSSP_VERSION
         );
         $updater->hooks();
