@@ -80,3 +80,8 @@ body.mlcssp-has-expanded-editor{overflow:hidden}
 .mlcssp-override-badge{background:#155e6f;color:#fff;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700}
 .mlcssp-scan-status{padding:14px 16px;border:1px solid var(--mlcssp-line);border-radius:14px;background:#fafcfd}
 @media (max-width:900px){.mlcssp-detected-row{flex-direction:column;align-items:flex-start;gap:6px}.mlcssp-override-form{margin-left:0;width:100%}.mlcssp-text-input{width:100%}}
+/* ML CSS Pro v1.6.0 - licenca (tools.mlopesdesign.com.br) */
+.mlcssp-license-badge{display:inline-flex;align-items:center;min-height:26px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:700}
+.mlcssp-license-badge.is-full{background:#e7f6ec;color:#159947}.mlcssp-license-badge.is-trial{background:var(--mlcssp-brand-soft);color:var(--mlcssp-brand)}.mlcssp-license-badge.is-free{background:#fdf0e6;color:#a3521a}
+.mlcssp-license-table td:last-child{text-align:left;width:auto}.mlcssp-license-table td:first-child{width:140px;white-space:nowrap}
+.mlcssp-actions form{margin:0}

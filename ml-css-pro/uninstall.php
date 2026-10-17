@@ -22,3 +22,7 @@ if (!empty($upload['basedir'])) {
         @unlink($compiled);
     }
 }
+
+// 1.6.0: licenca pelo site tools — a licenca local fica (reinstalar recupera); so a
+// renovacao diaria e desagendada.
+wp_clear_scheduled_hook( 'mllc_ml_css_pro_refresh' );

@@ -14,12 +14,6 @@ final class MLCSSP_Settings {
             'accent_note' => 'Use os controles visuais para gerar CSS automaticamente. O editor de codigo fica apenas como modo avancado.',
             'enable_license_tab' => '1',
             'enable_reports_tab' => '1',
-            'license_product_id' => 'ml-css-pro',
-            'license_endpoint' => 'https://hub.mlopesdesign.com.br/wp-json/ml-license/v1/validate',
-            'license_item_name' => 'ML CSS Pro',
-            'license_seller_name' => 'ML Lopes Design',
-            'license_cta_title' => 'Licenciamento ML CSS Pro',
-            'license_cta_text' => 'Ative o serial para liberar recursos profissionais de CSS global, Nicepage e injecao avancada.',
             'css_enabled' => '1',
             'css_position' => 'head',
             'css_priority' => '9999',
@@ -336,12 +330,6 @@ final class MLCSSP_Settings {
         $current['accent_note'] = sanitize_textarea_field((string) ($input['accent_note'] ?? $current['accent_note']));
         $current['enable_license_tab'] = empty($input['enable_license_tab']) ? '0' : '1';
         $current['enable_reports_tab'] = empty($input['enable_reports_tab']) ? '0' : '1';
-        $current['license_product_id'] = sanitize_text_field((string) ($input['license_product_id'] ?? $current['license_product_id']));
-        $current['license_endpoint'] = esc_url_raw((string) ($input['license_endpoint'] ?? $current['license_endpoint']));
-        $current['license_item_name'] = sanitize_text_field((string) ($input['license_item_name'] ?? $current['license_item_name']));
-        $current['license_seller_name'] = sanitize_text_field((string) ($input['license_seller_name'] ?? $current['license_seller_name']));
-        $current['license_cta_title'] = sanitize_text_field((string) ($input['license_cta_title'] ?? $current['license_cta_title']));
-        $current['license_cta_text'] = sanitize_textarea_field((string) ($input['license_cta_text'] ?? $current['license_cta_text']));
         return $current;
     }
 

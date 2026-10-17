@@ -103,9 +103,11 @@ final class MLCSSP_CSS_Engine {
             'global_size' => MLCSSP_Helpers::format_bytes(strlen($global_css)),
             'nicepage_size' => MLCSSP_Helpers::format_bytes(strlen($nicepage_css)),
             'nicepage_detected_now' => $this->is_nicepage_context(),
-            'license_global_allowed' => $this->license_manager->is_feature_allowed('free'),
-            'license_nicepage_allowed' => $this->license_manager->is_feature_allowed('trial'),
-            'license_advanced_allowed' => $this->license_manager->is_feature_allowed('full'),
+            // 1.6.0: a licença não altera o CSS publicado; só libera a edição no painel.
+            'license_global_allowed' => true,
+            'license_nicepage_allowed' => true,
+            'license_advanced_allowed' => true,
+            'license_can_edit' => MLCSSP_License::is_active(),
             'detected_targets' => $this->get_detected_targets(),
             'cache' => $this->get_compiled_asset(),
             'theme' => $this->get_theme_label(),
@@ -288,19 +290,19 @@ final class MLCSSP_CSS_Engine {
 
         $parts = [];
         $visual_css = $this->build_visual_css($settings);
-        if ($visual_css !== '' && $this->license_manager->is_feature_allowed('free')) {
+        if ($visual_css !== '') {
             $parts[] = "/* ML CSS Pro: visual */\n" . $visual_css;
         }
 
         $global_css = self::sanitize_css((string) ($settings['global_css'] ?? ''));
-        if ($global_css !== '' && $this->license_manager->is_feature_allowed('free')) {
+        if ($global_css !== '') {
             $parts[] = "/* ML CSS Pro: global */\n" . $global_css;
         }
 
         $nicepage_css = self::sanitize_css((string) ($settings['nicepage_css'] ?? ''));
         $nicepage_mode = (string) ($settings['nicepage_mode'] ?? 'detected');
         $should_load_nicepage = $nicepage_mode === 'all' || ($nicepage_mode === 'detected' && $this->is_nicepage_context());
-        if ($nicepage_css !== '' && $should_load_nicepage && $this->license_manager->is_feature_allowed('trial')) {
+        if ($nicepage_css !== '' && $should_load_nicepage) {
             if (($settings['css_safe_mode'] ?? '1') === '1') {
                 $scope = trim((string) ($settings['nicepage_scope'] ?? 'body.mlcssp-nicepage-page'));
                 if ($scope !== '') {
@@ -320,7 +322,7 @@ final class MLCSSP_CSS_Engine {
         if ($css === '') {
             return '';
         }
-        if (($settings['css_minify'] ?? '1') === '1' && $this->license_manager->is_feature_allowed('full')) {
+        if (($settings['css_minify'] ?? '1') === '1') {
             $css = $this->minify_css($css);
         }
         return $css;
