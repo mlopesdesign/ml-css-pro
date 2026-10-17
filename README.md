@@ -4,7 +4,7 @@ Plugin comercial WordPress para gestão visual de CSS — ML Lopes Design.
 
 Editor visual de CSS para WordPress e Nicepage, com scanner de CSS do frontend, detecção real de seletores, editor de código com realce de sintaxe, validação de CSS, biblioteca de snippets, histórico com restauração e assistente de seletores.
 
-## Versão atual: 1.5.4
+## Versão atual: 1.6.0
 
 ## Instalação
 

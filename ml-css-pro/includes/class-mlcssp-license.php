@@ -1,177 +1,259 @@
 <?php
+/**
+ * Licença do ML CSS Pro.
+ *
+ * 1.6.0: a licença passa a ser emitida e conferida pelo site tools.mlopesdesign.com.br
+ * (módulo ML License Hub, cliente ML_License_Client_V2). O servidor antigo
+ * (hub.mlopesdesign.com.br) não é mais consultado. Regras do padrão ML:
+ * 1 licença = 1 site (o Pacote Agência vale em vários sites); teste grátis de 30 dias
+ * por site; sem teste/licença válidos, o painel fica só para leitura (salvar CSS,
+ * overrides, presets, histórico, importar, editor visual) — o CSS já salvo continua
+ * aplicado no site e nenhum dado é apagado.
+ *
+ * Quem já usava o plugin antes da 1.6.0 recebe o teste grátis automaticamente na
+ * primeira visita ao painel (o site não trava de surpresa após a atualização).
+ *
+ * A option antiga (mlcsspro_license) é preservada (não é mais usada).
+ */
+
 if (!defined('ABSPATH')) {
     exit;
 }
 
+require_once __DIR__ . '/class-ml-license-client.php';
+
 final class MLCSSP_License {
-    private const OPTION_KEY = 'mlcsspro_license';
+    public const API_BASE    = 'https://tools.mlopesdesign.com.br/wp-json/mllh/v1';
+    public const PUBLIC_KEY  = 'VGZQp2X3RJMuDmQBlIEXS4fqsZD1CnFlIJgfVtY/pHo=';
+    public const PRODUCT_ID  = 'ml-css-pro';
+    public const BUY_URL     = 'https://tools.mlopesdesign.com.br/precos/';
+    public const ACCOUNT_URL = 'https://tools.mlopesdesign.com.br/minha-conta/';
+    public const AUTO_TRIAL  = 'mlcssp_auto_trial_tried';
 
-    public function get_state(): array {
-        $saved = get_option(self::OPTION_KEY, []);
-        if (!is_array($saved)) {
-            $saved = [];
+    private static ?ML_License_Client_V2 $client = null;
+    private static ?bool $locked = null;
+    private static bool $booted = false;
+
+    public static function client(): ML_License_Client_V2 {
+        if (self::$client === null) {
+            self::$client = new ML_License_Client_V2([
+                'api_base'   => self::API_BASE,
+                'product'    => self::PRODUCT_ID,
+                'public_key' => self::PUBLIC_KEY,
+                'version'    => MLCSSP_VERSION,
+            ]);
         }
-        return wp_parse_args($saved, [
-            'status' => 'inactive',
-            'plan' => 'free',
-            'serial' => '',
-            'email' => '',
-            'expires_at' => '',
-            'last_check' => '',
-            'activated_at' => '',
-            'instance_id' => $this->get_instance_id(),
-            'message' => '',
-        ]);
+        return self::$client;
     }
 
-    public function get_runtime_config(): array {
-        $settings = (new MLCSSP_Settings())->get_settings();
-        return [
-            'product_id' => (string) ($settings['license_product_id'] ?? 'ml-css-pro'),
-            'endpoint' => (string) ($settings['license_endpoint'] ?? ''),
-            'item_name' => (string) ($settings['license_item_name'] ?? 'ML CSS Pro'),
-            'seller_name' => (string) ($settings['license_seller_name'] ?? 'ML Lopes Design'),
-            'cta_title' => (string) ($settings['license_cta_title'] ?? 'Licenciamento ML CSS Pro'),
-            'cta_text' => (string) ($settings['license_cta_text'] ?? ''),
+    /** Teste ou licença válidos neste site. */
+    public static function is_active(): bool {
+        return self::client()->is_premium();
+    }
+
+    /** Painel travado para gravar (sem teste nem licença). */
+    public static function is_locked(): bool {
+        if (self::$locked === null) {
+            self::$locked = !self::is_active();
+        }
+        return self::$locked;
+    }
+
+    public static function forget(): void {
+        self::$locked = null;
+    }
+
+    /* ------------------------------------------------------------------ ganchos */
+
+    public static function boot(): void {
+        if (self::$booted) {
+            return;
+        }
+        self::$booted = true;
+        self::client(); // agenda a renovação diária
+        add_action('admin_init', [__CLASS__, 'maybe_auto_trial'], 5);
+        add_action('admin_notices', [__CLASS__, 'locked_notice']);
+        // Formulário padrão do WP (options.php) para o grupo de configurações do plugin.
+        add_filter('pre_update_option_' . MLCSSP_OPTION_KEY, [__CLASS__, 'lock_options_php'], 10, 2);
+        add_action('admin_post_mlcssp_activate_license', [__CLASS__, 'handle_activate_request']);
+        add_action('admin_post_mlcssp_sync_license', [__CLASS__, 'handle_sync_request']);
+        add_action('admin_post_mlcssp_remove_license', [__CLASS__, 'handle_remove_request']);
+        $opt = self::client()->option_name();
+        foreach (['added_option', 'updated_option', 'deleted_option'] as $hook) {
+            add_action($hook, static function ($name) use ($opt) {
+                if ($name === $opt) {
+                    MLCSSP_License::forget();
+                }
+            });
+        }
+    }
+
+    /** Primeira visita ao painel: começa o teste grátis sozinho (uma tentativa por site). */
+    public static function maybe_auto_trial(): void {
+        if (wp_doing_ajax() || !current_user_can('manage_options') || get_option(self::AUTO_TRIAL)) {
+            return;
+        }
+        update_option(self::AUTO_TRIAL, time(), false);
+        $state = self::client()->state();
+        if (empty($state['active']) && 'none' === $state['mode'] && empty($state['trial_used'])) {
+            self::client()->start_trial();
+        }
+    }
+
+    /**
+     * Para as ações de gravação do painel (admin-post e AJAX).
+     * Sem licença: não grava e volta para a aba Licença com o aviso.
+     */
+    public static function guard_write(bool $ajax = false): void {
+        if (!self::is_locked()) {
+            return;
+        }
+        $msg = 'Ative a licença (ou comece o teste grátis) para alterar o ML CSS Pro. O CSS já salvo continua aplicado no site.';
+        if ($ajax) {
+            wp_send_json_error($msg, 403);
+        }
+        self::redirect_to_license('error', $msg);
+    }
+
+    /** Bloqueia gravar as configurações pelo options.php quando travado. */
+    public static function lock_options_php($value, $old_value) {
+        if (isset($GLOBALS['pagenow']) && 'options.php' === $GLOBALS['pagenow'] && self::is_locked()) {
+            return $old_value;
+        }
+        return $value;
+    }
+
+    public static function locked_notice(): void {
+        $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+        if (!$screen || 'toplevel_page_ml-css-pro' !== $screen->id || !current_user_can('manage_options') || !self::is_locked()) {
+            return;
+        }
+        $tab = isset($_GET['tab']) ? sanitize_key((string) $_GET['tab']) : '';
+        if ('license' === $tab) {
+            return;
+        }
+        printf(
+            '<div class="notice notice-warning"><p><strong>ML CSS Pro:</strong> %s <a href="%s">%s</a></p></div>',
+            esc_html('sem licença ativa — o painel está só para leitura. O CSS já salvo continua aplicado no site.'),
+            esc_url(self::license_url()),
+            esc_html('Ativar licença')
+        );
+    }
+
+    /* ------------------------------------------------------------------ tela */
+
+    /** Estado pronto para a tela. */
+    public function get_license_summary(): array {
+        $state  = self::client()->state();
+        $active = !empty($state['active']);
+        $mode   = (string) ($state['mode'] ?? 'none');
+        $plan   = strtolower((string) ($state['plan'] ?? ''));
+        $days   = $state['days_left'] ?? null;
+
+        $plans = [
+            'trial'    => 'Teste grátis',
+            'monthly'  => 'Mensal',
+            'annual'   => 'Anual',
+            'yearly'   => 'Anual',
+            'lifetime' => 'Vitalícia',
+            'manual'   => 'Cortesia',
+            'courtesy' => 'Cortesia',
         ];
-    }
+        $plan_label = $plans[$plan] ?? ('' !== $plan ? ucfirst($plan) : '—');
 
-    public function save(array $input): array {
-        $state = $this->get_state();
-        $state['serial'] = sanitize_text_field((string) ($input['serial'] ?? ''));
-        $state['email'] = sanitize_email((string) ($input['email'] ?? ''));
-        $requested_status = $this->sanitize_status((string) ($input['status'] ?? 'inactive'));
-        $requested_plan = $this->sanitize_plan((string) ($input['plan'] ?? 'free'));
-        $state['expires_at'] = sanitize_text_field((string) ($input['expires_at'] ?? ''));
-        $state['last_check'] = current_time('mysql');
-        $state['instance_id'] = $this->get_instance_id();
-
-        $validation = $this->validate_remote($state['serial'], $state['email'], $requested_plan, $requested_status, $state['instance_id']);
-        if ($validation['mode'] === 'remote') {
-            $state['status'] = $this->sanitize_status((string) ($validation['status'] ?? 'inactive'));
-            $state['plan'] = $this->sanitize_plan((string) ($validation['plan'] ?? 'free'));
-            $state['expires_at'] = sanitize_text_field((string) ($validation['expires_at'] ?? $state['expires_at']));
-            $state['message'] = sanitize_text_field((string) ($validation['message'] ?? 'Licenca validada com sucesso.'));
+        if ($active && 'trial' === $mode) {
+            $label   = 'Teste';
+            $tone    = 'trial';
+            $message = null === $days ? 'Teste grátis ativo neste site.' : sprintf(1 === (int) $days ? 'Teste grátis ativo: falta %d dia.' : 'Teste grátis ativo: faltam %d dias.', (int) $days);
+        } elseif ($active) {
+            $label   = 'Ativa';
+            $tone    = 'full';
+            $message = 'Licença ativa neste site.';
         } else {
-            $state['status'] = $requested_status;
-            $state['plan'] = $requested_plan;
-            $state['message'] = $state['status'] === 'active'
-                ? 'Licenca ativa localmente. Configure o endpoint real para validacao comercial.'
-                : 'Licenca salva localmente. Configure um endpoint real para validacao remota.';
+            $label = 'Sem licença';
+            $tone  = 'free';
+            if ('trial_expired' === ($state['status'] ?? '')) {
+                $message = 'O teste grátis terminou. Ative uma licença para voltar a editar o CSS. O CSS já salvo continua aplicado no site.';
+            } elseif ('' !== (string) ($state['message'] ?? '')) {
+                $message = (string) $state['message'];
+            } else {
+                $message = 'Comece o teste grátis de 30 dias ou ative a sua licença.';
+            }
         }
 
-        if ($state['status'] === 'active' && $state['activated_at'] === '') {
-            $state['activated_at'] = current_time('mysql');
-        }
-        update_option(self::OPTION_KEY, $state, false);
-        return $state;
-    }
-
-    private function validate_remote(string $serial, string $email, string $requested_plan, string $requested_status, string $instance_id): array {
-        $config = $this->get_runtime_config();
-        $endpoint = trim((string) ($config['endpoint'] ?? ''));
-        if ($endpoint === '' || $serial === '') {
-            return [
-                'mode' => 'local',
-                'plan' => $requested_plan,
-                'status' => $requested_status,
-            ];
-        }
-
-        $response = wp_remote_post($endpoint, [
-            'timeout' => 20,
-            'headers' => ['Accept' => 'application/json'],
-            'body' => [
-                'product_id' => (string) ($config['product_id'] ?? ''),
-                'item_name' => (string) ($config['item_name'] ?? ''),
-                'seller_name' => (string) ($config['seller_name'] ?? ''),
-                'serial' => $serial,
-                'email' => $email,
-                'instance_id' => $instance_id,
-                'site_url' => home_url('/'),
-                'requested_plan' => $requested_plan,
-                'requested_status' => $requested_status,
-            ],
-        ]);
-
-        if (is_wp_error($response)) {
-            return [
-                'mode' => 'local',
-                'plan' => $requested_plan,
-                'status' => $requested_status,
-                'message' => 'Falha no endpoint: ' . $response->get_error_message(),
-            ];
-        }
-
-        $code = (int) wp_remote_retrieve_response_code($response);
-        $raw = (string) wp_remote_retrieve_body($response);
-        $data = json_decode($raw, true);
-        if ($code < 200 || $code >= 300 || !is_array($data)) {
-            return [
-                'mode' => 'local',
-                'plan' => $requested_plan,
-                'status' => $requested_status,
-                'message' => 'Resposta invalida do endpoint de licenca.',
-            ];
+        $expires_label = '';
+        if (!empty($state['expires_at'])) {
+            $ts = strtotime((string) $state['expires_at']);
+            if ($ts) {
+                $expires_label = wp_date((string) get_option('date_format', 'd/m/Y'), $ts);
+            }
         }
 
         return [
-            'mode' => 'remote',
-            'plan' => (string) ($data['plan'] ?? $requested_plan),
-            'status' => (string) ($data['status'] ?? $requested_status),
-            'expires_at' => (string) ($data['expires_at'] ?? ''),
-            'message' => (string) ($data['message'] ?? 'Licenca validada remotamente.'),
+            'active'          => $active,
+            'mode'            => $mode,
+            'is_trial'        => $active && 'trial' === $mode,
+            'label'           => $label,
+            'tone'            => $tone,
+            'message'         => $message,
+            'plan'            => $plan,
+            'plan_label'      => $plan_label,
+            'expires_label'   => $expires_label,
+            'days_left'       => $days,
+            'key_masked'      => (string) ($state['key_masked'] ?? ''),
+            'can_start_trial' => !$active && empty($state['trial_used']) && 'license' !== $mode,
+            'domain'          => (string) wp_parse_url(home_url(), PHP_URL_HOST),
         ];
     }
 
-    public function is_feature_allowed(string $required_plan): bool {
-        $state = $this->get_state();
-        $levels = [
-            'free' => 1,
-            'trial' => 2,
-            'full' => 3,
-            'lifetime' => 4,
-        ];
-        $current = $levels[$state['plan']] ?? 1;
-        $required = $levels[$required_plan] ?? 1;
-        if ($state['status'] !== 'active' && !($state['plan'] === 'trial' && $state['status'] !== 'blocked')) {
-            return $required <= 1;
+    /* ------------------------------------------------------------------ ações */
+
+    public static function handle_activate_request(): void {
+        self::guard_admin_request('mlcssp_activate_license');
+        $key    = isset($_POST['license_key']) ? sanitize_text_field(wp_unslash((string) $_POST['license_key'])) : '';
+        $result = self::client()->activate($key);
+        if (is_wp_error($result)) {
+            self::redirect_to_license('error', $result->get_error_message());
         }
-        return $current >= $required;
+        self::redirect_to_license('success', 'Licença ativada neste site.');
     }
 
-    public function get_plan_label(string $plan): string {
-        $labels = [
-            'free' => 'Free',
-            'trial' => 'Trial',
-            'full' => 'Full',
-            'lifetime' => 'Vitalicio',
-        ];
-        return $labels[$plan] ?? ucfirst($plan);
+    /** Começa o teste grátis ou confere a licença agora. */
+    public static function handle_sync_request(): void {
+        self::guard_admin_request('mlcssp_sync_license');
+        $op     = isset($_POST['mlcssp_op']) ? sanitize_key(wp_unslash((string) $_POST['mlcssp_op'])) : 'check';
+        $result = 'trial' === $op ? self::client()->start_trial() : self::client()->refresh();
+        if (is_wp_error($result)) {
+            self::redirect_to_license('error', $result->get_error_message());
+        }
+        self::redirect_to_license('success', 'trial' === $op ? 'Teste grátis de 30 dias ativo neste site.' : 'Licença conferida.');
     }
 
-    public function get_status_label(string $status): string {
-        $labels = [
-            'inactive' => 'Inativo',
-            'active' => 'Ativo',
-            'expired' => 'Expirado',
-            'blocked' => 'Bloqueado',
-        ];
-        return $labels[$status] ?? ucfirst($status);
+    public static function handle_remove_request(): void {
+        self::guard_admin_request('mlcssp_remove_license');
+        self::client()->deactivate();
+        self::redirect_to_license('success', 'Licença removida deste site. A chave pode ser usada em outro site.');
     }
 
-    private function sanitize_plan(string $plan): string {
-        $allowed = ['free', 'trial', 'full', 'lifetime'];
-        return in_array($plan, $allowed, true) ? $plan : 'free';
+    private static function guard_admin_request(string $nonce_action): void {
+        if (!current_user_can('manage_options')) {
+            wp_die(esc_html('Permissão insuficiente.'));
+        }
+        check_admin_referer($nonce_action);
     }
 
-    private function sanitize_status(string $status): string {
-        $allowed = ['inactive', 'active', 'expired', 'blocked'];
-        return in_array($status, $allowed, true) ? $status : 'inactive';
+    public static function license_url(): string {
+        return add_query_arg(['page' => 'ml-css-pro', 'tab' => 'license'], admin_url('admin.php'));
     }
 
-    private function get_instance_id(): string {
-        $url = function_exists('home_url') ? (string) home_url('/') : 'site';
-        return substr(hash('sha256', $url . '|' . wp_salt('auth')), 0, 20);
+    public static function redirect_to_license(string $type, string $message): void {
+        $url = add_query_arg([
+            'page'              => 'ml-css-pro',
+            'tab'               => 'license',
+            'mlcssp_toast'      => rawurlencode($message),
+            'mlcssp_toast_type' => 'error' === $type ? 'error' : 'success',
+        ], admin_url('admin.php'));
+        wp_safe_redirect($url);
+        exit;
     }
 }

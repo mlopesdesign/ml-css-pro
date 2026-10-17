@@ -4,7 +4,7 @@ Tags: css, nicepage, admin, license, custom-css, scanner
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 1.5.5
+Stable tag: 1.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,6 +14,14 @@ Editor visual de CSS para WordPress e Nicepage com scanner de CSS do frontend, d
 ML CSS Pro detecta os estilos reais do seu site (cores, fontes, botoes, header, rodape, formularios, layout) e permite editar os valores detectados diretamente no painel. Overrides sao compilados em wp-content/uploads/ml-css-pro/compiled.css com cache-busting automatico.
 
 == Changelog ==
+
+= 1.6.0 =
+* Licenca pelo site tools.mlopesdesign.com.br (ML License Hub). O servidor antigo hub.mlopesdesign.com.br nao e mais consultado.
+* Aceita a chave do Pacote Agencia (todos os plugins ML em varios sites).
+* Teste gratis de 30 dias por site. Quem ja usava o plugin recebe o teste automaticamente na primeira visita ao painel.
+* Sem teste ou licenca: o painel fica so para leitura (salvar CSS e configuracoes, overrides, presets, historico, importar, scanner e editor visual). O CSS ja salvo continua aplicado no site e nada e apagado. Exportar continua liberado.
+* O CSS publicado nao depende mais do plano: o CSS Nicepage e a minificacao seguem apenas as configuracoes salvas.
+* Aba Licenca refeita: situacao, plano, validade, teste gratis, conferir, remover e "Como funciona"; sem campos de servidor e Product ID.
 
 = 1.5.5 =
 * Atualizacoes passam a vir do repositorio publico mlopesdesign/ml-css-pro-releases (somente ZIPs).

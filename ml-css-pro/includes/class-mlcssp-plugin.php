@@ -35,7 +35,6 @@ final class MLCSSP_Plugin {
         add_filter('body_class', [$this->css_engine, 'filter_body_classes']);
         add_action('admin_post_mlcssp_save_settings', [$this, 'handle_save_settings']);
         add_action('admin_post_mlcssp_save_css', [$this, 'handle_save_css']);
-        add_action('admin_post_mlcssp_save_license', [$this, 'handle_save_license']);
         add_action('admin_post_mlcssp_tools', [$this, 'handle_tools']);
         add_action('admin_post_mlcssp_scan', [$this, 'handle_scan']);
         add_action('admin_post_mlcssp_override', [$this, 'handle_override']);
@@ -94,8 +93,7 @@ final class MLCSSP_Plugin {
             return;
         }
         $settings = $this->settings_manager->get_settings();
-        $license = $this->license_manager->get_state();
-        $license_config = $this->license_manager->get_runtime_config();
+        $license = $this->license_manager->get_license_summary();
         $css_report = $this->css_engine->get_report();
         $css_report['detected_nicepage'] = $this->css_engine->get_detected_nicepage_selectors();
         $css_report['target_examples'] = $this->css_engine->get_target_examples();
@@ -116,7 +114,6 @@ final class MLCSSP_Plugin {
         $this->admin_ui->render(
             $settings,
             $license,
-            $license_config,
             $css_report,
             $active_tab,
             $toast_message,
@@ -126,6 +123,7 @@ final class MLCSSP_Plugin {
     }
 
     public function handle_save_settings(): void {
+        MLCSSP_License::guard_write();
         if (!current_user_can('manage_options')) {
             wp_die(esc_html__('Unauthorized.', 'ml-css-pro'));
         }
@@ -137,6 +135,7 @@ final class MLCSSP_Plugin {
     }
 
     public function handle_save_css(): void {
+        MLCSSP_License::guard_write();
         if (!current_user_can('manage_options')) {
             wp_die(esc_html__('Unauthorized.', 'ml-css-pro'));
         }
@@ -149,23 +148,16 @@ final class MLCSSP_Plugin {
         $this->redirect_with_toast($this->posted_tab('global'), $compiled ? 'Ajustes salvos e CSS compilado.' : 'Ajustes salvos. Nao foi possivel gravar o CSS em uploads; o fallback inline continua disponivel.', $compiled ? 'success' : 'warning');
     }
 
-    public function handle_save_license(): void {
-        if (!current_user_can('manage_options')) {
-            wp_die(esc_html__('Unauthorized.', 'ml-css-pro'));
-        }
-        check_admin_referer('mlcssp_save_license');
-        $raw = isset($_POST['mlcssp_license']) ? wp_unslash($_POST['mlcssp_license']) : [];
-        $state = $this->license_manager->save(is_array($raw) ? $raw : []);
-        $message = !empty($state['message']) ? (string) $state['message'] : 'Licenca salva.';
-        $this->redirect_with_toast('license', $message, 'success');
-    }
-
     public function handle_tools(): void {
         if (!current_user_can('manage_options')) {
             wp_die(esc_html__('Unauthorized.', 'ml-css-pro'));
         }
         check_admin_referer('mlcssp_tools');
         $tool_action = isset($_POST['mlcssp_tool_action']) ? sanitize_key((string) wp_unslash($_POST['mlcssp_tool_action'])) : '';
+        // Sem licença só a exportação (leitura) continua; o resto grava e fica travado.
+        if ($tool_action !== 'export') {
+            MLCSSP_License::guard_write();
+        }
 
         if ($tool_action === 'export') {
             $filename = 'ml-css-pro-config-' . gmdate('Ymd-His') . '.json';
@@ -303,6 +295,7 @@ final class MLCSSP_Plugin {
     }
 
     public function handle_scan(): void {
+        MLCSSP_License::guard_write();
         if (!current_user_can('manage_options')) {
             wp_die(esc_html__('Unauthorized.', 'ml-css-pro'));
         }
@@ -326,6 +319,7 @@ final class MLCSSP_Plugin {
     }
 
     public function handle_override(): void {
+        MLCSSP_License::guard_write();
         if (!current_user_can('manage_options')) {
             wp_die(esc_html__('Unauthorized.', 'ml-css-pro'));
         }
@@ -432,6 +426,7 @@ final class MLCSSP_Plugin {
 
     public function handle_visual_save(): void {
         check_ajax_referer('mlcssp_visual_save');
+        MLCSSP_License::guard_write(true);
         if (!current_user_can('manage_options')) {
             wp_send_json_error('Unauthorized.', 403);
         }
@@ -604,6 +599,7 @@ final class MLCSSP_Plugin {
 
     public function handle_visual_reset(): void {
         check_ajax_referer('mlcssp_visual_save');
+        MLCSSP_License::guard_write(true);
         if (!current_user_can('manage_options')) {
             wp_send_json_error('Unauthorized.', 403);
         }

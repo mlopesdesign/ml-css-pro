@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 
 final class MLCSSP_Admin_UI {
 
-    public function render(array $settings, array $license_state, array $license_config, array $css_report, string $active_tab, string $toast_message = '', string $toast_type = 'success', ?MLCSSP_License $license_manager = null): void {
+    public function render(array $settings, array $license_state, array $css_report, string $active_tab, string $toast_message = '', string $toast_type = 'success', ?MLCSSP_License $license_manager = null): void {
         $tabs = [
             'dashboard' => 'Dashboard',
             'visual' => 'Visual',
@@ -22,7 +22,7 @@ final class MLCSSP_Admin_UI {
             'history' => 'Historico',
             'inspector' => 'Seletores',
             'advanced' => 'Avancado',
-            'license' => 'Licenca',
+            'license' => 'Licença',
             'tools' => 'Ferramentas',
         ];
         if (!isset($tabs[$active_tab])) {
@@ -69,7 +69,7 @@ final class MLCSSP_Admin_UI {
             <?php $this->history_panel($active_tab); ?>
             <?php $this->inspector_panel($active_tab, $css_report); ?>
             <?php $this->advanced_panel($active_tab, $settings, $css_report); ?>
-            <?php $this->license_panel($active_tab, $license_state, $license_config, $license_manager); ?>
+            <?php $this->license_panel($active_tab, $license_state); ?>
             <?php $this->tools_panel($active_tab, $settings, $css_report); ?>
         </div>
         <?php
@@ -591,20 +591,91 @@ final class MLCSSP_Admin_UI {
         <?php
     }
 
-    private function license_panel(string $active_tab, array $license_state, array $license_config, MLCSSP_License $license_manager): void {
+    private function license_panel(string $active_tab, array $license): void {
+        $post_url = admin_url('admin-post.php');
+        $tones = ['full' => 'is-full', 'trial' => 'is-trial', 'free' => 'is-free'];
+        $tone = $tones[$license['tone'] ?? 'free'] ?? 'is-free';
+        $days_left = $license['days_left'] ?? null;
+        $is_lifetime = 'lifetime' === ($license['plan'] ?? '');
+        if (!empty($license['active'])) {
+            $valid_until = (!$is_lifetime && $license['expires_label'] !== '') ? $license['expires_label'] : 'Sem vencimento';
+        } else {
+            $valid_until = '—';
+        }
+        $days_text = (!empty($license['active']) && $days_left !== null && $license['expires_label'] !== '') ? (string) (int) $days_left : '—';
         ?>
         <section id="mlcssp-tab-license" class="mlcssp-tab-panel <?php echo $active_tab === 'license' ? 'is-active' : ''; ?>" <?php echo $active_tab === 'license' ? '' : 'hidden'; ?>>
-            <article class="mlcssp-card">
-                <div class="mlcssp-card-header"><div><h2>Licenca do plugin</h2><p class="mlcssp-muted">Gerenciamento de chave e nivel de acesso.</p></div></div>
-                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-                    <?php wp_nonce_field('mlcssp_save_license'); ?>
-                    <input type="hidden" name="action" value="mlcssp_save_license">
-                    <div class="mlcssp-field"><label for="mlcssp-license-key">Chave de licenca</label><input type="text" id="mlcssp-license-key" name="mlcssp_license[key]" value="<?php echo esc_attr((string) ($license_state['key'] ?? '')); ?>" placeholder="Insira sua chave"></div>
-                    <div class="mlcssp-field"><label for="mlcssp-license-email">Email</label><input type="email" id="mlcssp-license-email" name="mlcssp_license[email]" value="<?php echo esc_attr((string) ($license_state['email'] ?? '')); ?>" placeholder="email@exemplo.com"></div>
-                    <p class="mlcssp-muted">Status: <strong><?php echo esc_html((string) ($license_state['tier'] ?? 'free')); ?></strong></p>
-                    <button type="submit" class="button button-primary">Salvar licenca</button>
-                </form>
-            </article>
+            <div class="mlcssp-summary-grid">
+                <div class="mlcssp-summary-card"><span class="mlcssp-summary-label">Situação</span><strong><?php echo esc_html((string) $license['label']); ?></strong><span class="mlcssp-license-badge <?php echo esc_attr($tone); ?>"><?php echo !empty($license['active']) ? 'Painel liberado' : 'Painel só leitura'; ?></span></div>
+                <div class="mlcssp-summary-card"><span class="mlcssp-summary-label">Plano</span><strong><?php echo esc_html((string) $license['plan_label']); ?></strong></div>
+                <div class="mlcssp-summary-card"><span class="mlcssp-summary-label">Válida até</span><strong><?php echo esc_html($valid_until); ?></strong></div>
+                <div class="mlcssp-summary-card"><span class="mlcssp-summary-label">Dias restantes</span><strong><?php echo esc_html($days_text); ?></strong></div>
+            </div>
+            <div class="mlcssp-grid-2">
+                <article class="mlcssp-card">
+                    <div class="mlcssp-card-header">
+                        <div><h2>Licença do ML CSS Pro</h2><p class="mlcssp-muted">Conferida pelo site tools.mlopesdesign.com.br.</p></div>
+                        <span class="mlcssp-chip"><?php echo esc_html((string) $license['domain']); ?></span>
+                    </div>
+                    <p class="mlcssp-note"><?php echo esc_html((string) $license['message']); ?></p>
+
+                    <?php if ('license' === $license['mode'] && '' !== $license['key_masked']) : ?>
+                        <ul class="mlcssp-list" style="margin-top:16px;"><li><strong>Chave neste site:</strong> <code><?php echo esc_html((string) $license['key_masked']); ?></code></li></ul>
+                        <div class="mlcssp-actions">
+                            <form method="post" action="<?php echo esc_url($post_url); ?>">
+                                <?php wp_nonce_field('mlcssp_sync_license'); ?>
+                                <input type="hidden" name="action" value="mlcssp_sync_license">
+                                <input type="hidden" name="mlcssp_op" value="check">
+                                <button type="submit" class="button button-primary">Conferir agora</button>
+                            </form>
+                            <form method="post" action="<?php echo esc_url($post_url); ?>">
+                                <?php wp_nonce_field('mlcssp_remove_license'); ?>
+                                <input type="hidden" name="action" value="mlcssp_remove_license">
+                                <button type="submit" class="button button-secondary" data-confirm="Remover a licença deste site?">Remover deste site</button>
+                            </form>
+                            <a class="button button-secondary" href="<?php echo esc_url(MLCSSP_License::ACCOUNT_URL); ?>" target="_blank" rel="noopener">Minha conta</a>
+                        </div>
+                    <?php else : ?>
+                        <form method="post" action="<?php echo esc_url($post_url); ?>" style="margin-top:16px;">
+                            <?php wp_nonce_field('mlcssp_activate_license'); ?>
+                            <input type="hidden" name="action" value="mlcssp_activate_license">
+                            <div class="mlcssp-field"><label for="mlcssp-license-key">Chave da licença</label><input type="text" id="mlcssp-license-key" name="license_key" value="" placeholder="Cole aqui a sua chave" autocomplete="off" spellcheck="false"></div>
+                            <div class="mlcssp-actions"><button type="submit" class="button button-primary">Ativar licença</button></div>
+                        </form>
+                        <div class="mlcssp-actions">
+                            <?php if (!empty($license['can_start_trial'])) : ?>
+                                <form method="post" action="<?php echo esc_url($post_url); ?>">
+                                    <?php wp_nonce_field('mlcssp_sync_license'); ?>
+                                    <input type="hidden" name="action" value="mlcssp_sync_license">
+                                    <input type="hidden" name="mlcssp_op" value="trial">
+                                    <button type="submit" class="button button-secondary">Começar teste grátis de 30 dias</button>
+                                </form>
+                            <?php else : ?>
+                                <form method="post" action="<?php echo esc_url($post_url); ?>">
+                                    <?php wp_nonce_field('mlcssp_sync_license'); ?>
+                                    <input type="hidden" name="action" value="mlcssp_sync_license">
+                                    <input type="hidden" name="mlcssp_op" value="check">
+                                    <button type="submit" class="button button-secondary">Conferir agora</button>
+                                </form>
+                            <?php endif; ?>
+                            <a class="button button-secondary" href="<?php echo esc_url(MLCSSP_License::BUY_URL); ?>" target="_blank" rel="noopener">Comprar licença</a>
+                            <a class="button button-secondary" href="<?php echo esc_url(MLCSSP_License::ACCOUNT_URL); ?>" target="_blank" rel="noopener">Minha conta</a>
+                        </div>
+                    <?php endif; ?>
+                </article>
+                <article class="mlcssp-card">
+                    <div class="mlcssp-card-header"><div><h2>Como funciona</h2><p class="mlcssp-muted">tools.mlopesdesign.com.br</p></div></div>
+                    <table class="mlcssp-selector-table mlcssp-license-table">
+                        <tbody>
+                            <tr><td><strong>Teste grátis</strong></td><td>30 dias com tudo liberado, uma vez por site. Reinstalar não reinicia.</td></tr>
+                            <tr><td><strong>Licença anual</strong></td><td>Vale em 1 site. Para usar em outro, remova deste site.</td></tr>
+                            <tr><td><strong>Pacote Agência</strong></td><td>Uma chave para todos os plugins ML em 5, 10 ou 50 sites.</td></tr>
+                            <tr><td><strong>Sem licença</strong></td><td>O CSS já salvo continua aplicado no site. Só o painel fica bloqueado para salvar, aplicar overrides, importar e usar o editor visual.</td></tr>
+                        </tbody>
+                    </table>
+                    <p class="mlcssp-muted" style="margin-top:12px;">A licença é conferida uma vez por dia. Sem internet, o site continua liberado por até 7 dias. Nenhum dado é apagado.</p>
+                </article>
+            </div>
         </section>
         <?php
     }
